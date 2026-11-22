@@ -97,7 +97,7 @@ export const MOVES = {
     const want = Math.atan2(p.y + 7 - e.y, p.x + 16 - e.x);
     e.aim += clamp(angleDiff(want, e.aim), -0.04, 0.04);
     e.aim = clamp(e.aim, 0.15, Math.PI - 0.15);
-    if (--e.reload <= 0 && e.x > 8 && e.x < W - 8) {
+    if (--e.reload <= 0 && e.x > 8 && e.x < game.width - 8) {
       e.reload = Math.round(rand(90, 130) / game.st.hard.fireRate);
       game.shoot(e.x + Math.cos(e.aim) * 9, e.y + Math.sin(e.aim) * 9, e.aim, game.st.hard.bulletSpeed, true);
     }
@@ -115,7 +115,7 @@ export const MOVES = {
     // Face the ship while it is about; turn back from a wall, a drop or another robot when it
     // is not. Turning keeps the picture where it was.
     const sx = e.wx - game.scrollX;
-    const seen = sx > 12 && sx < W - 12;
+    const seen = sx > 12 && sx < game.width - 12;
     const facing = p.alive && seen && Math.abs(p.x + 16 - sx) > 16 ? Math.sign(p.x + 16 - sx) : 0;
     let open = canStep(game, e);
     if (!e.firing && !e.turnWait && (facing ? facing !== e.dir : !open)) {
@@ -149,7 +149,7 @@ export const MOVES = {
       });
       e.aim += Math.sign(best - e.aim);
     }
-    const inSight = p.alive && e.x > 12 && e.x < W - 12 && dx * e.dir > 12 && elevation > -0.3 && elevation < 1.3;
+    const inSight = p.alive && e.x > 12 && e.x < game.width - 12 && dx * e.dir > 12 && elevation > -0.3 && elevation < 1.3;
     if (--e.reload <= 0 && !e.firing && inSight) {
       e.firing = 40;
       e.reload = Math.round(rand(150, 200) / game.st.hard.fireRate);
@@ -166,8 +166,8 @@ export const MOVES = {
   // A gunship: comes in, slows to a crawl, fires spreads, and smokes once it is hurt.
   cruiser(game, e) {
     e.x += e.vx;
-    if (e.x < W - 60) e.vx = -0.2;
-    if (--e.reload <= 0 && e.x < W - 10) {
+    if (e.x < game.width - 60) e.vx = -0.2;
+    if (--e.reload <= 0 && e.x < game.width - 10) {
       e.reload = Math.round(80 / game.st.hard.fireRate);
       for (const offset of [-0.25, 0, 0.25]) game.aim(e, 1, offset);
     }
@@ -182,7 +182,7 @@ export const MOVES = {
     }
     e.x += e.vx;
     e.y += Math.sin(e.t * 0.08) * 0.5;
-    if (!e.fired && e.x > W * 0.6) {
+    if (!e.fired && e.x > game.width * 0.6) {
       e.fired = true;
       game.aim(e);
     }
@@ -247,34 +247,40 @@ function placeRobot(game, wx, limit) {
   return null;
 }
 
-/* Brings in one of the stage's waves (see stage.js) just off the right edge of the screen. */
-export function spawnWave(game, w) {
+/* Brings in one of the stage's waves (see stage.js) at screen x `edge`: just off the right edge
+   of the screen, unless the screen already reaches past the wave's place. */
+export function spawnWave(game, w, edge = game.width) {
   const n = w.count;
   const add = (kind, x, y, extra) => game.addEnemy(kind, x, y, extra);
   switch (w.kind) {
     case 'swarm': {
       const group = { size: n, killed: 0 };
       const amp = rand(14, 30);
-      for (let i = 0; i < n; i++) add('drifter', W + 14 + i * 16, w.y, { y0: w.y, vx: -1.15, amp, freq: 0.045, phase: i * 0.55, group });
+      for (let i = 0; i < n; i++) add('drifter', edge + 14 + i * 16, w.y, { y0: w.y, vx: -1.15, amp, freq: 0.045, phase: i * 0.55, group });
       break;
     }
     case 'darters':
+      // They brake a little over halfway across, so on a wider screen further across too.
       for (let i = 0; i < n; i++) {
-        add('darter', W + 16 + i * 22, clamp(w.y + (i - (n - 1) / 2) * 20, 12, PH - 12), { vx: -3.4, stopX: rand(170, 250), stage: 0 });
+        add('darter', edge + 16 + i * 22, clamp(w.y + (i - (n - 1) / 2) * 20, 12, PH - 12), {
+          vx: -3.4,
+          stopX: (rand(170, 250) * game.width) / W,
+          stage: 0,
+        });
       }
       break;
     case 'spores':
       for (let i = 0; i <= n; i++) {
         const y = clamp(w.y + rand(-24, 24), 14, PH - 14);
-        add('spore', W + 12 + i * 34, y, { y0: y, vx: -0.55, phase: rand(0, 6) });
+        add('spore', edge + 12 + i * 34, y, { y0: y, vx: -0.55, phase: rand(0, 6) });
       }
       break;
     case 'snake': {
       // The trail starts as if the snake had been swimming in from off screen.
-      const trail = Array.from({ length: 160 }, (_, k) => [W + 14 + k * 0.95, w.y]);
-      const head = add('head', W + 14, w.y, { y0: w.y, vx: -0.95, phase: 0, trail, segments: [], reload: 70 });
+      const trail = Array.from({ length: 160 }, (_, k) => [edge + 14 + k * 0.95, w.y]);
+      const head = add('head', edge + 14, w.y, { y0: w.y, vx: -0.95, phase: 0, trail, segments: [], reload: 70 });
       const length = 8 + Math.min(4, game.stageIndex);
-      for (let i = 1; i <= length; i++) head.segments.push(add('segment', W + 14 + i * 7.6, w.y, { head, index: i }));
+      for (let i = 1; i <= length; i++) head.segments.push(add('segment', edge + 14 + i * 7.6, w.y, { head, index: i }));
       break;
     }
     case 'turrets': {
@@ -283,18 +289,18 @@ export function spawnWave(game, w) {
       for (const ledge of w.ledges) {
         if (placed >= n) break;
         if (ledge.side === 'floor') {
-          if (placeRobot(game, Math.max(ledge.x0 + 8, game.scrollX + W + 12), ledge.x1 + 40)) placed++;
+          if (placeRobot(game, Math.max(ledge.x0 + 8, game.scrollX + edge + 12), ledge.x1 + 40)) placed++;
           continue;
         }
-        const wx = clamp(game.scrollX + W + rand(10, 120), ledge.x0 + 8, ledge.x1 - 8);
-        if (wx < game.scrollX + W + 6) continue;
+        const wx = clamp(game.scrollX + edge + rand(10, 120), ledge.x0 + 8, ledge.x1 - 8);
+        if (wx < game.scrollX + edge + 6) continue;
         add('turret', wx - game.scrollX, ledge.h + 5, { ground: true, aim: Math.PI / 2 + 0.8, reload: Math.round(rand(40, 90)) });
         placed++;
       }
       break;
     }
     case 'robots': {
-      let wx = game.scrollX + W + 12;
+      let wx = game.scrollX + edge + 12;
       for (let i = 0; i < n; i++) {
         const robot = placeRobot(game, wx, wx + 140);
         if (!robot) break;
@@ -303,10 +309,10 @@ export function spawnWave(game, w) {
       break;
     }
     case 'cruiser':
-      add('cruiser', W + 34, clamp(w.y, 26, PH - 26), { vx: -0.7, reload: 60 });
+      add('cruiser', edge + 34, clamp(w.y, 26, PH - 26), { vx: -0.7, reload: 60 });
       break;
     case 'carrier':
-      add('carrier', W + 16, w.y, { y0: w.y, vx: -0.7, phase: 0 });
+      add('carrier', edge + 16, w.y, { y0: w.y, vx: -0.7, phase: 0 });
       break;
     case 'rear':
       game.warnings.push({ y: w.y, t: 0 });

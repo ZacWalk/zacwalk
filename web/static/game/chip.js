@@ -1,5 +1,10 @@
-/* The game's sound chip: a small synthesiser in the manner of the C64's SID, a composer that
-   writes a new tune for every stage, and the game's sound effects.
+/* The game's sound chip: the soundtrack, a small synthesiser in the manner of the C64's SID, a
+   composer for the short jingles, and the game's sound effects.
+
+   The soundtrack is a tune for each stage and a boss theme, written with turbo-sid for this
+   game and its C64 version. music.js is the C64's music player with its data, and sid.js runs
+   it on an emulated 6502 and SID, so the web plays exactly what a C64 would. The jingles (get
+   ready, stage clear, game over) and the effects come from the synthesiser here.
 
    It runs on the audio thread as an AudioWorklet, so the music never stutters when the game is
    busy, and audio.js only sends it short messages: play this tune, make this sound. Apart from
@@ -10,8 +15,17 @@
    a second: notes start on frame boundaries, arpeggios step a note a frame, and vibrato, pulse
    width and the filter sweep a frame at a time. That stepping is much of the C64's sound. */
 
+import { MUSIC } from './music.js';
+import { SidPlayer } from './sid.js';
+
 const FRAME_HZ = 50;
 const ROWS_PER_BAR = 16;
+
+/* The soundtrack's tunes: one for each stage, in the stages' order, then the boss theme. */
+const BOSS_TUNE = MUSIC.tunes.length - 1;
+
+/* The soundtrack's level in the mix, as loud as the composer's tunes it replaced. */
+const SID_LEVEL = 1.5;
 
 /* The same seeded generator as art.js, repeated because a worklet stands alone. */
 function rng(seed) {
@@ -215,7 +229,6 @@ class Filter {
 const INSTRUMENTS = {
   bass: { wave: 'pulse', pw: 0.25, pwm: [0.1, 0.45, 0.012], env: [0.002, 0.22, 0.45, 0.06], level: 0.5, filter: [2600, 320, 14, 0.6] },
   dark: { wave: 'pulse', pw: 0.3, pwm: [0.15, 0.45, 0.006], env: [0.004, 0.3, 0.5, 0.08], level: 0.5, filter: [900, 220, 20, 0.5] },
-  growl: { wave: 'saw', env: [0.002, 0.16, 0.55, 0.05], level: 0.38, filter: [3400, 480, 8, 0.72] },
   lead: { wave: 'pulse', pw: 0.45, pwm: [0.18, 0.48, 0.006], env: [0.006, 0.3, 0.65, 0.12], level: 0.3, vibrato: [14, 0.22, 5.5], bend: [-0.6, -0.2] },
   saw: { wave: 'saw', env: [0.004, 0.25, 0.6, 0.1], level: 0.24, vibrato: [10, 0.28, 6] },
   arp: { wave: 'pulse', pw: 0.22, env: [0.001, 0.12, 0.3, 0.05], level: 0.19 },
@@ -232,7 +245,6 @@ const INSTRUMENTS = {
     level: 0.42,
   },
   hat: { table: [['noise', 9500]], gate: 1, env: [0, 0.03, 0, 0.03], level: 0.15 },
-  ohat: { table: [['noise', 8500]], gate: 1, env: [0, 0.14, 0, 0.12], level: 0.12 },
 };
 
 const sweep = (wave, from, to, frames, pw) =>
@@ -290,46 +302,13 @@ const SCALES = {
 /* Semitones above the key's tonic for a scale degree, which may run past an octave either way. */
 const semis = (scale, deg) => scale[((deg % 7) + 7) % 7] + 12 * Math.floor(deg / 7);
 
-/* Chords as scale degrees, a bar each: the minor-key moves of a thousand game tunes. */
-const PROGRESSIONS = [
-  [0, 5, 2, 6],
-  [0, 6, 5, 6],
-  [0, 3, 6, 2],
-  [0, 5, 3, 4],
-  [0, 0, 5, 6],
-  [0, 2, 5, 4],
-  [5, 6, 0, 0],
-  [0, 3, 0, 4],
-  [0, 6, 3, 4],
-];
-const BOSS_PROGRESSIONS = [
-  [0, 1, 0, 1],
-  [0, 5, 1, 4],
-  [0, 0, 3, 4],
-  [0, 6, 5, 4],
-  [0, 3, 1, 4],
-];
-
-/* Patterns, a character a row. Bass: R root, O octave, 5 fifth, - hold, . let go. Drums: K kick,
-   S snare, H hat, O open hat. Arpeggios: A chord, - hold, . let go. */
-const BASS = ['R.O.R.O.R.O.R.O.', 'R-.RR-.RR-.RO-5.', 'R.RO.RR.R.RO.R5O', 'R---R.O.R---R.OR', 'RR.ORR.ORR.ORR5O'];
-const BOSS_BASS = ['RRORRRORRRORRROR', 'RROR5RORRROR5ROO', 'R.RRO.RRR.RRO.R5'];
-const DRUMS = ['K.H.S.H.K.H.S.H.', 'K.HKS.H.K.HKS.HS', 'K.H.S..KK.H.S.H.', 'K.H.S.HKK.H.S.HO', 'KHHKSHHHKHHKSHHK'];
-const BOSS_DRUMS = ['K.HKS.HKK.HKS.HK', 'KHKHSHKHKHKHSHKS', 'K.K.S.K.K.K.S.KS'];
-const INTRO_DRUMS = 'K...H...K...H.H.';
-const BREAK_DRUMS = 'K.H.H.H.K.H.H.HO';
-const FILLS = ['SSSS', 'S.SS', 'SSKS', 'KSSS', 'S.S.'];
-const ARPS = ['A---A---A---A---', 'A-.AA-.AA-.AA-.A', 'A.A.A.A.A.A.A.A.', 'A--.A--.A-.A-.A.'];
-
 const OFF_EVENT = 0;
 
-/* A tune: a speed (frames per row), four tracks of events by row, and where it loops back to. */
+/* A jingle: a speed (frames per row) and four tracks of events by row. */
 class Song {
-  constructor(speed, loop) {
+  constructor(speed) {
     this.speed = speed;
-    this.loop = loop;
     this.bars = 0;
-    this.loopBar = 0;
     this.tracks = { bass: [], lead: [], arp: [], drums: [] };
   }
 
@@ -345,6 +324,9 @@ class Song {
     if (this.tracks[track][row] === undefined) this.tracks[track][row] = OFF_EVENT;
   }
 
+  /* A bar of a track from a pattern, a character a row: `notes` maps a character to a note and
+     its instrument (R root, O octave, 5 fifth for the bass; K kick, S snare, H hat; A a chord
+     for the arpeggio), '-' holds and '.' lets go. */
   pattern(track, bar, pattern, notes) {
     for (let i = 0; i < ROWS_PER_BAR; i++) {
       const ch = pattern[i];
@@ -355,127 +337,12 @@ class Song {
   }
 }
 
-/* Two bars of rhythm for a melody: where each note starts, how long it lasts, and which way it
-   steps from the last one, in scale steps. */
-function motif(r) {
-  const notes = [];
-  for (let row = 0; row < 32; ) {
-    let len = r.pick(row % 4 === 0 ? [2, 4, 4, 6, 8] : [1, 2, 2, 3]);
-    len = Math.min(len, 32 - row);
-    if (row > 0 && r.chance(0.12)) {
-      row += len;
-      continue;
-    }
-    notes.push({ row, len, step: r.pick([-2, -1, -1, -1, 0, 1, 1, 1, 2, 3, -3]) });
-    row += len;
-  }
-  return notes;
-}
-
-/* The same rhythm with its second bar re-stepped: a phrase that answers the first. */
-const vary = (r, m) => m.map((n) => (n.row >= 16 && r.chance(0.6) ? { ...n, step: r.pick([-2, -1, 1, 2]) } : n));
-
-const isChordTone = (deg, root) => [0, 2, 4].includes((((deg - root) % 7) + 7) % 7);
-
-function nearestChordTone(deg, root) {
-  for (let d = 0; d < 4; d++) {
-    if (isChordTone(deg + d, root)) return deg + d;
-    if (isChordTone(deg - d, root)) return deg - d;
-  }
-  return deg;
-}
-
-/* Sets a two-bar motif to music over its chords: steps through the scale, landing on a chord
-   tone on every strong beat, bouncing off the edges of the range, and with a cadence it ends
-   on the chord's root and holds it. */
-function realize(song, m, bar0, chords, ctx, cadence = false) {
-  const LO = -2;
-  const HI = 11;
-  m.forEach((note, k) => {
-    const chord = chords[Math.floor(note.row / ROWS_PER_BAR)];
-    let deg = ctx.deg + note.step;
-    if (deg > HI) deg = 2 * HI - deg;
-    if (deg < LO) deg = 2 * LO - deg;
-    if (note.row % 8 === 0) deg = nearestChordTone(deg, chord);
-    const last = cadence && k === m.length - 1;
-    if (last) {
-      deg = chord + 7 * Math.round((deg - chord) / 7);
-      if (deg > HI) deg -= 7;
-    }
-    ctx.deg = deg;
-    const row = bar0 * ROWS_PER_BAR + note.row;
-    song.note('lead', row, ctx.tonic + semis(ctx.scale, deg), ctx.inst);
-    const len = last ? 32 - note.row : note.len;
-    song.off('lead', row + len - (len > 2 ? 1 : 0));
-  });
-}
-
-/* A looping tune for a stage, or for a boss: an intro, then sections over two chord
-   progressions, with a melody built from two motifs, stated, answered and resolved. */
-function composeLoop(seed, boss) {
-  const r = rng(seed);
-  const scale = SCALES[boss ? r.pick(['harmonic', 'phrygian']) : r.pick(['aeolian', 'aeolian', 'dorian', 'harmonic'])];
-  const key = r.int(0, 11);
-  const song = new Song(boss ? 5 : r.pick([6, 6, 7]), true);
-  const progs = boss ? BOSS_PROGRESSIONS : PROGRESSIONS;
-  const progA = r.pick(progs);
-  const progB = r.pick(progs.filter((p) => p !== progA));
-  const bassA = r.pick(boss ? BOSS_BASS : BASS);
-  const bassB = r.pick(boss ? BOSS_BASS : BASS);
-  const drumA = r.pick(boss ? BOSS_DRUMS : DRUMS);
-  const drumB = r.pick(boss ? BOSS_DRUMS : DRUMS);
-  const arpA = r.pick(ARPS);
-  const arpB = r.pick(ARPS);
-  const ctx = { tonic: 60 + key, scale, deg: 4, inst: boss ? r.pick(['saw', 'lead']) : r.pick(['lead', 'lead', 'saw']) };
-  const ma = motif(r);
-  const mb = motif(r);
-  const sections = boss
-    ? [['intro', 2, progA], ['A', 8, progA], ['B', 8, progB]]
-    : [['intro', 4, progA], ['A', 8, progA], ['B', 8, progB], ['A', 8, progA], ['break', 4, progB]];
-  song.loopBar = sections[0][1];
-
-  for (const [kind, bars, prog] of sections) {
-    const bar0 = song.bars;
-    song.bars += bars;
-    const chords = Array.from({ length: bars }, (_, i) => prog[i % prog.length]);
-    chords.forEach((deg, b) => {
-      const bar = bar0 + b;
-      const root = (key + semis(scale, deg)) % 12;
-      const third = semis(scale, deg + 2) - semis(scale, deg);
-      const fifth = semis(scale, deg + 4) - semis(scale, deg);
-      const bassNote = 36 + root;
-      const bassInst = kind === 'intro' ? 'dark' : boss ? 'growl' : 'bass';
-      const bassPattern = kind === 'intro' ? 'R---R---R---R.O.' : kind === 'break' ? 'R-------R---R-O-' : kind === 'B' ? bassB : bassA;
-      song.pattern('bass', bar, bassPattern, { R: [bassNote, bassInst], O: [bassNote + 12, bassInst], 5: [bassNote + 7, bassInst] });
-      let drums = kind === 'intro' ? INTRO_DRUMS : kind === 'break' ? BREAK_DRUMS : kind === 'B' ? drumB : drumA;
-      if (b % 4 === 3 && kind !== 'intro') drums = drums.slice(0, 12) + r.pick(FILLS);
-      song.pattern('drums', bar, drums, { K: [36, 'kick'], S: [38, 'snare'], H: [42, 'hat'], O: [46, 'ohat'] });
-      if (kind !== 'intro') {
-        song.pattern('arp', bar, kind === 'B' ? arpB : arpA, { A: [55 + ((root + 5) % 12), 'arp', [0, third, fifth]] });
-      }
-    });
-    if (kind === 'A') {
-      realize(song, ma, bar0, chords.slice(0, 2), ctx);
-      realize(song, vary(r, ma), bar0 + 2, chords.slice(2, 4), ctx);
-      realize(song, mb, bar0 + 4, chords.slice(4, 6), ctx);
-      realize(song, vary(r, ma), bar0 + 6, chords.slice(6, 8), ctx, true);
-    } else if (kind === 'B') {
-      realize(song, mb, bar0, chords.slice(0, 2), ctx);
-      realize(song, vary(r, mb), bar0 + 2, chords.slice(2, 4), ctx);
-      ctx.deg += 2;
-      realize(song, ma, bar0 + 4, chords.slice(4, 6), ctx);
-      realize(song, vary(r, mb), bar0 + 6, chords.slice(6, 8), ctx, true);
-    }
-  }
-  return song;
-}
-
 /* The short tunes: get ready, stage clear and game over. They play once. */
-function composeJingle(kind, seed) {
+export function compose(kind, seed) {
   const r = rng(seed);
   const key = r.int(0, 11);
   if (kind === 'ready') {
-    const song = new Song(5, false);
+    const song = new Song(5);
     song.bars = 2;
     const tonic = 60 + key;
     [-7, -5, -3, 0, 2, 4, 7].forEach((deg, i) => song.note('lead', i * 2, tonic + semis(SCALES.aeolian, deg), 'lead'));
@@ -489,7 +356,7 @@ function composeJingle(kind, seed) {
     return song;
   }
   if (kind === 'clear') {
-    const song = new Song(5, false);
+    const song = new Song(5);
     song.bars = 4;
     const tonic = 60 + ((key + 3) % 12);
     const scale = SCALES.ionian;
@@ -509,7 +376,7 @@ function composeJingle(kind, seed) {
     return song;
   }
   // Game over: slower, and downhill all the way.
-  const song = new Song(6, false);
+  const song = new Song(6);
   song.bars = 3;
   const tonic = 60 + key;
   const scale = SCALES.aeolian;
@@ -551,27 +418,22 @@ class Player {
     }
     if (++this.tick >= song.speed) {
       this.tick = 0;
-      if (++this.row >= song.rows) {
-        if (song.loop) this.row = song.loopBar * ROWS_PER_BAR;
-        else return this.chip.tuneEnded(this.next);
-      }
+      if (++this.row >= song.rows) return this.chip.tuneEnded(this.next);
     }
   }
 }
 
-export function compose(kind, seed) {
-  if (kind === 'stage') return composeLoop(seed, false);
-  if (kind === 'boss') return composeLoop(seed ^ 0xb055, true);
-  return composeJingle(kind, seed);
-}
-
 // ---------- the chip ----------
 
-/* Four voices of music (bass, lead, chords, drums), three for sound effects, one for the
-   charge-up whine, a filter on the bass, an echo on the lead, and the mix. */
+/* The soundtrack on the SID player; four voices for the jingles (bass, lead, chords, drums),
+   three for sound effects, one for the charge-up whine, a filter on the bass, an echo on the
+   lead, and the mix. */
 export class Chip {
   constructor(sr) {
     this.sr = sr;
+    this.sid = new SidPlayer(MUSIC, sr);
+    this.sidL = new Float32Array(128);
+    this.sidR = new Float32Array(128);
     this.music = {
       bass: new Voice(sr, 0),
       lead: new Voice(sr, -0.3),
@@ -598,20 +460,29 @@ export class Chip {
 
   /* A message from audio.js. */
   command(msg) {
-    if (msg.type === 'tune') this.startTune(msg.tune, msg.seed, msg.next);
+    if (msg.type === 'tune') this.startTune(msg);
     else if (msg.type === 'sfx') this.sfx(msg.name);
     else if (msg.type === 'charge') this.chargeLevel = msg.level;
     else if (msg.type === 'silence') {
       this.player = null;
       for (const v of Object.values(this.music)) v.release();
+      this.sid.stop();
     }
   }
 
-  startTune(kind, seed, next = null) {
+  /* Starts a tune: the soundtrack's tune for stage `stage` or the boss theme, which loop, or a
+     jingle, which hands over to `next`, a tune of the same shape, when it ends. */
+  startTune({ tune, seed, stage = 0, next = null }) {
     // Let go of whatever the last tune left sounding; the new one starts its own notes, and a
     // jingle without chords must not keep the old chord going under it.
     for (const v of Object.values(this.music)) v.release();
-    const song = compose(kind, seed);
+    if (tune === 'stage' || tune === 'boss') {
+      this.player = null;
+      this.sid.start(tune === 'boss' ? BOSS_TUNE : stage % BOSS_TUNE);
+      return;
+    }
+    this.sid.stop();
+    const song = compose(tune, seed);
     this.player = new Player(this, song, next);
     this.echoLen = Math.min(this.echo.length - 1, Math.round(((3 * song.speed) / FRAME_HZ) * this.sr));
   }
@@ -619,7 +490,7 @@ export class Chip {
   tuneEnded(next) {
     this.player = null;
     for (const v of Object.values(this.music)) v.release();
-    if (next) this.startTune(next.tune, next.seed, next.next);
+    if (next) this.startTune(next);
   }
 
   sfx(name) {
@@ -670,6 +541,12 @@ export class Chip {
   render(left, right) {
     const { bass, lead, arp, drums } = this.music;
     const others = [arp, drums, ...this.effects, this.charger];
+    if (this.sidL.length !== left.length) {
+      this.sidL = new Float32Array(left.length);
+      this.sidR = new Float32Array(left.length);
+    }
+    const { sidL, sidR } = this;
+    this.sid.render(sidL, sidR);
     for (let i = 0; i < left.length; i++) {
       if (--this.untilFrame <= 0) {
         this.untilFrame += this.perFrame;
@@ -677,8 +554,8 @@ export class Chip {
       }
       const b = this.filter.process(bass.sample());
       const l = lead.sample();
-      let L = b + l * lead.panL;
-      let R = b + l * lead.panR;
+      let L = b + l * lead.panL + sidL[i] * SID_LEVEL;
+      let R = b + l * lead.panR + sidR[i] * SID_LEVEL;
       for (const v of others) {
         const s = v.sample();
         L += s * v.panL;

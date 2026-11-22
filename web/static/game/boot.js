@@ -1,18 +1,36 @@
-/* The only script the page loads up front. It shows the title screen's PRESS START button,
-   which the page hides for anyone without scripts, and loads the game (arcade.js and the rest)
-   only when someone reaches for the button. */
+/* The only script the page loads up front. Once the page has loaded it starts the attract mode
+   (attract.js), the game playing itself behind the portrait; it shows the title screen's PRESS
+   START button, which the page hides for anyone without scripts; and it opens the arcade
+   (arcade.js) when someone presses it, pausing the attract mode until they quit. */
 
+const scene = document.querySelector('[data-attract]');
 const button = document.querySelector('[data-press-start]');
+let demo = null;
+
+// After the page has loaded, and when the browser has a moment, so the game never holds up the
+// page. Not for anyone who has asked their browser to save data.
+if (scene && 'IntersectionObserver' in window && !navigator.connection?.saveData) {
+  const begin = () =>
+    import('./attract.js')
+      .then(({ attract }) => (demo = attract(scene)))
+      .catch((err) => console.error(err));
+  const soon = () => (window.requestIdleCallback ? requestIdleCallback(begin, { timeout: 1500 }) : setTimeout(begin, 200));
+  if (document.readyState === 'complete') soon();
+  else window.addEventListener('load', soon, { once: true });
+}
 
 if (button && 'HTMLDialogElement' in window) {
   // The best score on this machine (see SCORES_KEY in game.js), as an arcade would show it.
-  try {
-    const best = JSON.parse(localStorage.getItem('rethinkify-scores') ?? 'null')?.[0]?.score;
-    const hi = button.querySelector('[data-hi]');
-    if (hi && Number.isFinite(best)) hi.textContent = `HI ${String(best).padStart(7, '0')}`;
-  } catch {
-    // No storage, or nothing saved yet: the button just says PRESS START.
-  }
+  const hi = button.querySelector('[data-hi]');
+  const showHi = () => {
+    try {
+      const best = JSON.parse(localStorage.getItem('rethinkify-scores') ?? 'null')?.[0]?.score;
+      if (hi && Number.isFinite(best)) hi.textContent = `HI ${String(best).padStart(7, '0')}`;
+    } catch {
+      // No storage, or nothing saved yet: the button just says PRESS START.
+    }
+  };
+  showHi();
 
   let loading = null;
   let starting = false;
@@ -32,12 +50,18 @@ if (button && 'HTMLDialogElement' in window) {
     } catch {
       audio = null;
     }
+    const back = () => {
+      demo?.resume();
+      showHi();
+    };
     try {
       const { play } = await load();
-      await play({ audio, opener: button });
+      demo?.pause();
+      await play({ audio, opener: button, onClose: back });
     } catch (err) {
       audio?.close().catch(() => {});
       loading = null;
+      back();
       console.error(err);
     } finally {
       starting = false;

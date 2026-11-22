@@ -4,15 +4,25 @@ import hashlib
 import os
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from flask import Flask, Response, abort, render_template, send_from_directory
+from flask import (
+    Flask,
+    Response,
+    abort,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
+from flask.typing import ResponseReturnValue
 
 app = Flask(__name__)
 
 _IS_PROD = os.getenv("GAE_ENV", "").startswith("standard")
 
-# The only scripts are the title screen's game, all served from this origin (see /game below),
-# so script-src stays at 'self' with nothing inline. JSON-LD is a data block rather than
+# The menu and game scripts are served from this origin, so script-src stays at
+# 'self' with nothing inline. JSON-LD is a data block rather than
 # executable script, so the policy does not affect it.
 _CSP = (
     "default-src 'none'; "
@@ -44,7 +54,31 @@ def _security_headers(response: Response) -> Response:
 
 
 # Canonical site origin used in absolute URLs (sitemap, canonical tags, OG, JSON-LD).
-SITE_ORIGIN = "https://rethinkify.com"
+SITE_ORIGIN = "https://zacwalk.com"
+_CANONICAL_HOST = urlsplit(SITE_ORIGIN).hostname
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0"}
+
+
+@app.before_request
+def _redirect_to_canonical_host() -> ResponseReturnValue | None:
+    """Redirect legacy, www and App Engine hosts to the canonical origin.
+
+    Otherwise search engines crawl each host as a separate copy of the site. /health keeps
+    answering on any host for uptime checks; /static never reaches this hook (app.yaml).
+    """
+    host = (request.host or "").split(":")[0].lower()
+    if (
+        not host
+        or host == _CANONICAL_HOST
+        or host in _LOCAL_HOSTS
+        or request.path == "/health"
+    ):
+        return None
+    path = request.full_path if request.query_string else request.path
+    return redirect(
+        SITE_ORIGIN + path, code=301 if request.method in {"GET", "HEAD"} else 308
+    )
+
 
 _STYLESHEET = Path(app.static_folder or "static") / "styles.css"
 _GAME = Path(app.static_folder or "static") / "game"
@@ -104,7 +138,7 @@ def index() -> str:
 @app.get("/favicon.ico")
 def favicon() -> Response:
     return send_from_directory(
-        app.static_folder or "static", "favicon-c64.svg", mimetype="image/svg+xml"
+        app.static_folder or "static", "zacwalk-portrait.svg", mimetype="image/svg+xml"
     )
 
 
@@ -157,6 +191,12 @@ def server_error(_error: Exception) -> tuple[str, int]:
 @app.get("/health")
 def health() -> tuple[str, int]:
     return "ok", 200
+
+
+@app.get("/about")
+def about() -> ResponseReturnValue:
+    """The CV used to be its own page; it is now the home page's #about section."""
+    return redirect("/#about", code=301)
 
 
 @app.get("/robots.txt")

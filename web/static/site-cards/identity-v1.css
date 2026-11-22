@@ -1,0 +1,41 @@
+/* The page names its own site; each related-site card names its destination.
+   Ink is light enough for type. The stronger mark is for rules, not body text. */
+[data-site] {
+  --identity-divider: color-mix(in srgb, var(--identity-mark) 45%, #353a3b);
+}
+
+[data-site="diffractor"] {
+  --identity-ink: #feca57;
+  --identity-mark: #d4a03c;
+  --identity-tint: #3d311e;
+}
+
+[data-site="64ready"] {
+  --identity-ink: #b2d99e;
+  --identity-mark: #83b269;
+  --identity-tint: #283a2b;
+}
+
+[data-site="alphagalactica"] {
+  --identity-ink: #96d3d0;
+  --identity-mark: #55a5a4;
+  --identity-tint: #1e373a;
+}
+
+[data-site="oldthinkpad"] {
+  --identity-ink: #ff9ca8;
+  --identity-mark: #e4002b;
+  --identity-tint: #3b252b;
+}
+
+[data-site="zacwalk"] {
+  --identity-ink: #a5c9e6;
+  --identity-mark: #689cc5;
+  --identity-tint: #24364a;
+}
+
+[data-site="imagewalker"] {
+  --identity-ink: #edbb9b;
+  --identity-mark: #bd865f;
+  --identity-tint: #3d2e26;
+}

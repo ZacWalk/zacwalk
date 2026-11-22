@@ -1,4 +1,4 @@
-# Rethinkify CLI Tool
+# ZacWalk CLI Tool
 # Usage: .\dd.ps1 <command> [options]
 #
 # Commands:
@@ -20,18 +20,18 @@ param(
     [string[]]$Rest = @()
 )
 
-# Hard-pinned: this repo is the rethinkify project. Never deploy
+# Hard-pinned: this site deploys to the zacwalk project. Never deploy
 # anywhere else, even if `gcloud config set project ...` points at
 # another project on this machine. Intentionally not exposed as a
 # parameter so a stray `-Project foo` cannot ship to the wrong project.
-$TARGET_PROJECT = "rethinkify"
+$TARGET_PROJECT = "zacwalk"
 
 $ErrorActionPreference = "Stop"
 $ScriptRoot = $PSScriptRoot
 
 function Show-Help {
     Write-Host ""
-    Write-Host "Rethinkify CLI Tool" -ForegroundColor Cyan
+    Write-Host "ZacWalk CLI Tool" -ForegroundColor Cyan
     Write-Host "===================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage: .\dd.ps1 <command> [options]" -ForegroundColor Yellow
@@ -78,7 +78,7 @@ function Invoke-Format {
     param([switch]$Check)
 
     $VenvPython = Get-VenvPython
-    $paths = @((Join-Path $ScriptRoot "web"), (Join-Path $ScriptRoot "tools"))
+    $paths = @((Join-Path $ScriptRoot "web"))
 
     & $VenvPython -m black --version 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
@@ -98,7 +98,7 @@ function Invoke-Format {
 
 function Invoke-Deploy {
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  Deploying Rethinkify to App Engine" -ForegroundColor Cyan
+    Write-Host "  Deploying ZacWalk to App Engine" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 
@@ -177,7 +177,7 @@ function Invoke-Deploy {
 
 function Invoke-Run {
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  Starting Rethinkify Dev Server" -ForegroundColor Cyan
+    Write-Host "  Starting ZacWalk Dev Server" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 

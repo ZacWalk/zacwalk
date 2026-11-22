@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392 499">
+  <title>64Ready</title>
+  <!--
+    The 64Ready logo: a Commodore 64 drifting down under a parachute.
+
+    The canopy is the C64's case badge sewn into a dome: the badge's warm grey,
+    its five stripes in badge order, curved to follow the canopy's outline,
+    and its "64". The background is
+    transparent, so the logo sits on any page colour; the cords are dark with
+    a light core so they show on dark and light pages alike.
+
+    The C64 is a breadbin: its side profile, traced from a photo of the real
+    machine, swept along its width. Taller at the back than the front, its
+    top rolls over in a large rounded edge into a short front face, and its
+    back rolls over into the top in a smaller one, so the curves run the
+    length of the machine and show at its ends; the seam
+    between its top and bottom shells runs along the left end and the front.
+    Its top is drawn as a flat plan in key
+    units (1 = one key pitch). Width projects to (14,-3.95), deck depth to
+    (7.6,8.5), and physical height straight up. Both end profiles and every
+    row of keys share those axes. Each key
+    is a tapered keycap: a dark footprint on the plate, the front and left
+    faces this view shows, and a smaller top face raised above it. The case
+    badge carries the C= logo, "commodore", the stripes and "64", as on the
+    real machine.
+  -->
+  <defs>
+    <path id="canopy" d="M4 170C4 78.32 87.27 4 190 4C292.73 4 376 78.32 376 170Q343.82 139.1 311.64 166.2Q275.28 146.2 238.92 166.2Q190 126.2 141.08 166.2Q104.72 146.2 68.36 166.2Q36.18 139.1 4 170Z"/>
+    <clipPath id="canopy-clip"><use href="#canopy"/></clipPath>
+    <path id="cords" d="M4 170L165.82 340.488M68.36 166.2L177.02 337.327M141.08 166.2L185.42 334.957M238.92 166.2L193.82 332.587M311.64 166.2L206.42 329.032M376 170L227.42 323.108"/>
+    <path id="case" d="M11.824 380.44L305.824 297.49Q306.736 296.11 309.928 299.68L374.68 372.1Q382.28 380.6 382.28 387.6V396.4Q382.28 400.8 378.1 396.125L84.1 479.075L14.18 410.175Q10 405.5 10 400L10 383Q10 380 11.824 380.44Z"/>
+    <!-- Lit from above: darker where the back rolls away, flat on the top, a
+         highlight as the bullnose rolls over, darker down the front and its
+         rounded underside -->
+    <linearGradient id="case-shade" gradientUnits="userSpaceOnUse" x1="14" y1="378" x2="47" y2="495">
+      <stop offset="0" stop-color="#C2BAAC"/>
+      <stop offset="0.04" stop-color="#DAD4C8"/>
+      <stop offset="0.79" stop-color="#DAD4C8"/>
+      <stop offset="0.83" stop-color="#E6E1D8"/>
+      <stop offset="0.91" stop-color="#D3CCBF"/>
+      <stop offset="1" stop-color="#ABA395"/>
+      <stop offset="1" stop-color="#9C9486"/>
+    </linearGradient>
+    <g id="key-086">
+      <rect width="0.86" height=".86" rx=".1" fill="#302922"/>
+      <path d="M0 .04 .26 -.23 .26 .45 0 .82Z" fill="#493e35"/>
+      <path d="M0 .82 .26 .45 0.94 .45 0.86 .82Z" fill="#625345"/>
+      <rect x=".26" y="-.23" width="0.68" height=".68" rx=".09" fill="#786b59" stroke="#302922" stroke-width=".045"/>
+    </g>
+    <g id="key-136">
+      <rect width="1.36" height=".86" rx=".1" fill="#302922"/>
+      <path d="M0 .04 .26 -.23 .26 .45 0 .82Z" fill="#493e35"/>
+      <path d="M0 .82 .26 .45 1.44 .45 1.36 .82Z" fill="#625345"/>
+      <rect x=".26" y="-.23" width="1.18" height=".68" rx=".09" fill="#786b59" stroke="#302922" stroke-width=".045"/>
+    </g>
+    <g id="key-186">
+      <rect width="1.86" height=".86" rx=".1" fill="#302922"/>
+      <path d="M0 .04 .26 -.23 .26 .45 0 .82Z" fill="#493e35"/>
+      <path d="M0 .82 .26 .45 1.94 .45 1.86 .82Z" fill="#625345"/>
+      <rect x=".26" y="-.23" width="1.68" height=".68" rx=".09" fill="#786b59" stroke="#302922" stroke-width=".045"/>
+    </g>
+    <g id="key-966">
+      <rect width="9.66" height=".86" rx=".1" fill="#302922"/>
+      <path d="M0 .04 .26 -.23 .26 .45 0 .82Z" fill="#493e35"/>
+      <path d="M0 .82 .26 .45 9.74 .45 9.66 .82Z" fill="#625345"/>
+      <rect x=".26" y="-.23" width="9.48" height=".68" rx=".09" fill="#786b59" stroke="#302922" stroke-width=".045"/>
+    </g>
+    <g id="key-f136">
+      <rect width="1.36" height=".86" rx=".1" fill="#49484a"/>
+      <path d="M0 .04 .26 -.23 .26 .45 0 .82Z" fill="#6b6667"/>
+      <path d="M0 .82 .26 .45 1.44 .45 1.36 .82Z" fill="#8d8989"/>
+      <rect x=".26" y="-.23" width="1.18" height=".68" rx=".09" fill="#b5b0ac" stroke="#49484a" stroke-width=".045"/>
+    </g>
+  </defs>
+
+  <!-- Rigging -->
+  <g fill="none" stroke-linecap="round">
+    <use href="#cords" stroke="#241C17" stroke-width="3.6"/>
+    <use href="#cords" stroke="#BDB6AA" stroke-width="1.5"/>
+  </g>
+
+  <!-- Canopy: badge grey, the five badge stripes following its outline, alternate gores shaded -->
+  <g clip-path="url(#canopy-clip)">
+    <rect width="392" height="171" fill="#635A52"/>
+    <path d="M13 170A177 157 0 0 1 367 170L358 170A168 148 0 0 0 22 170Z" fill="#D3172F"/>
+    <path d="M27 170A163 143 0 0 1 353 170L344 170A154 134 0 0 0 36 170Z" fill="#E2703A"/>
+    <path d="M41 170A149 129 0 0 1 339 170L330 170A140 120 0 0 0 50 170Z" fill="#EDD83C"/>
+    <path d="M55 170A135 115 0 0 1 325 170L316 170A126 106 0 0 0 64 170Z" fill="#0F9A63"/>
+    <path d="M69 170A121 101 0 0 1 311 170L302 170A112 92 0 0 0 78 170Z" fill="#1A78D6"/>
+    <path d="M190 4C122.82 4 68.36 76.62 68.36 166.2Q104.72 146.2 141.08 166.2C141.08 76.62 162.98 4 190 4ZM190 4C217.02 4 238.92 76.62 238.92 166.2Q275.28 146.2 311.64 166.2C311.64 76.62 257.18 4 190 4Z" fill-opacity="0.13"/>
+  </g>
+  <path d="M190 4C122.82 4 68.36 76.62 68.36 166.2M190 4C162.98 4 141.08 76.62 141.08 166.2M190 4C217.02 4 238.92 76.62 238.92 166.2M190 4C257.18 4 311.64 76.62 311.64 166.2" fill="none" stroke="#241C17" stroke-width="1.6" stroke-opacity="0.75"/>
+  <use href="#canopy" fill="none" stroke="#241C17" stroke-width="3.4" stroke-linejoin="round"/>
+  <path transform="translate(132.06 97.75) scale(0.385)" fill="#D3CFCA" fill-rule="evenodd"
+        d="M34 0H116A12 12 0 0 1 128 12V19A4 4 0 0 1 124 23H51.5A4.5 4.5 0 0 0 51.5 32H120A8 8 0 0 1 128 40V70A30 30 0 0 1 98 100H34A34 34 0 0 1 0 66V34A34 34 0 0 1 34 0ZM56 50H82A9 9 0 0 1 91 59V68A9 9 0 0 1 82 77H56A9 9 0 0 1 47 68V59A9 9 0 0 1 56 50ZM192 0H260A6 6 0 0 1 266 6V59H296A5 5 0 0 1 301 64V78A5 5 0 0 1 296 83H266V94A6 6 0 0 1 260 100H234A6 6 0 0 1 228 94V83H148A6 6 0 0 1 142 77V59ZM228 28V59H197Z"/>
+
+  <!-- The C64: the top, bullnose and front in one sweep, then its left end
+       (the side profile) and the seam between its shells -->
+  <use href="#case" fill="url(#case-shade)"/>
+  <path d="M11.824 380.44Q12.736 379.06 15.928 382.63L80.68 455.05Q88.28 463.55 88.28 470.55V479.35Q88.28 483.75 84.1 479.075L14.18 410.175Q10 405.5 10 400L10 383Q10 380 11.824 380.44Z" fill="#b5ac9d" stroke="#241C17" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10 395L88.28 474.75L382.28 391.8" fill="none" stroke="#241C17" stroke-width="1.3" stroke-opacity="0.6"/>
+  <g transform="matrix(14 -3.95 7.6 8.5 10 376)">
+    <!-- keyboard frame, vents, badge and power light -->
+    <rect x="1.15" y="3.0" width="19.4" height="6.05" rx="0.5" fill="none" stroke="#241C17" stroke-opacity="0.6" stroke-width="0.11"/>
+    <g fill="#241C17" fill-opacity="0.55">
+      <rect x="0.55" y="1" width="19.9" height="0.12"/>
+      <rect x="0.55" y="1.38" width="19.9" height="0.12"/>
+      <rect x="0.55" y="1.76" width="19.9" height="0.12"/>
+      <rect x="0.55" y="2.14" width="19.9" height="0.12"/>
+      <rect x="0.55" y="2.52" width="19.9" height="0.12"/>
+    </g>
+    <g transform="translate(1.3 1.28)">
+      <rect width="6.4" height="1.1" rx="0.55" fill="#635A52" stroke="#241C17" stroke-width="0.07"/>
+      <g fill="#D3CFCA">
+        <path d="M0.73 0.39A0.24 0.24 0 1 0 0.73 0.71" fill="none" stroke="#D3CFCA" stroke-width="0.12"/>
+        <path d="M0.6 0.42H0.88L0.82 0.52H0.6ZM0.6 0.58H0.82L0.88 0.68H0.6Z"/>
+        <path transform="translate(5.25 0.36) scale(0.00299 0.00380)" fill-rule="evenodd" d="M34 0H116A12 12 0 0 1 128 12V19A4 4 0 0 1 124 23H51.5A4.5 4.5 0 0 0 51.5 32H120A8 8 0 0 1 128 40V70A30 30 0 0 1 98 100H34A34 34 0 0 1 0 66V34A34 34 0 0 1 34 0ZM56 50H82A9 9 0 0 1 91 59V68A9 9 0 0 1 82 77H56A9 9 0 0 1 47 68V59A9 9 0 0 1 56 50ZM192 0H260A6 6 0 0 1 266 6V59H296A5 5 0 0 1 301 64V78A5 5 0 0 1 296 83H266V94A6 6 0 0 1 260 100H234A6 6 0 0 1 228 94V83H148A6 6 0 0 1 142 77V59ZM228 28V59H197Z"/>
+      </g>
+      <path transform="translate(0.98 0.68) scale(0.25)" d="M0.76 -0.79A0.39 0.39 0 1 0 0.76 -0.21M1.13 -0.5A0.39 0.39 0 1 0 1.91 -0.5A0.39 0.39 0 1 0 1.13 -0.5ZM2.27 -0.11V-0.89M2.27 -0.57A0.32 0.32 0 0 1 2.91 -0.57V-0.11M2.91 -0.57A0.32 0.32 0 0 1 3.55 -0.57V-0.11M3.91 -0.11V-0.89M3.91 -0.57A0.32 0.32 0 0 1 4.55 -0.57V-0.11M4.55 -0.57A0.32 0.32 0 0 1 5.19 -0.57V-0.11M5.55 -0.5A0.39 0.39 0 1 0 6.33 -0.5A0.39 0.39 0 1 0 5.55 -0.5ZM6.69 -0.5A0.39 0.39 0 1 0 7.47 -0.5A0.39 0.39 0 1 0 6.69 -0.5ZM7.47 -0.11V-1.39M7.83 -0.5A0.39 0.39 0 1 0 8.61 -0.5A0.39 0.39 0 1 0 7.83 -0.5ZM8.97 -0.11V-0.89M8.97 -0.55A0.34 0.34 0 0 1 9.31 -0.89L9.38 -0.89M9.73 -0.5H10.51A0.39 0.39 0 1 0 10.41 -0.239"
+            fill="none" stroke="#D3CFCA" stroke-width="0.22" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="3.81" y="0.25" width="1.29" height="0.09" fill="#D3172F"/><rect x="3.81" y="0.38" width="1.29" height="0.09" fill="#E2703A"/><rect x="3.81" y="0.51" width="1.29" height="0.09" fill="#EDD83C"/><rect x="3.81" y="0.64" width="1.29" height="0.09" fill="#0F9A63"/><rect x="3.81" y="0.77" width="1.29" height="0.09" fill="#1A78D6"/>
+    </g>
+    <rect x="16.95" y="1.38" width="1.8" height="0.9" rx="0.45" fill="#241C17"/>
+    <circle cx="18.3" cy="1.83" r="0.24" fill="#E0302A"/>
+    <!-- Key rows, back to front; the two wells are recessed in the upper shell. -->
+    <path fill="#342f29" d="M1.82 3.18h16.23v2.32h-.25v2H14.3v1.1H4.32v-1.1h-2.7v-2h.2Z"/>
+    <rect x="18.47" y="3.18" width="1.72" height="4.32" rx=".19" fill="#554e49"/>
+      <use href="#key-f136" x="18.62" y="3.52"/>
+      <use href="#key-086" x="17" y="3.52"/>
+      <use href="#key-086" x="16" y="3.52"/>
+      <use href="#key-086" x="15" y="3.52"/>
+      <use href="#key-086" x="14" y="3.52"/>
+      <use href="#key-086" x="13" y="3.52"/>
+      <use href="#key-086" x="12" y="3.52"/>
+      <use href="#key-086" x="11" y="3.52"/>
+      <use href="#key-086" x="10" y="3.52"/>
+      <use href="#key-086" x="9" y="3.52"/>
+      <use href="#key-086" x="8" y="3.52"/>
+      <use href="#key-086" x="7" y="3.52"/>
+      <use href="#key-086" x="6" y="3.52"/>
+      <use href="#key-086" x="5" y="3.52"/>
+      <use href="#key-086" x="3.99" y="3.52"/>
+      <use href="#key-086" x="2.99" y="3.52"/>
+      <use href="#key-086" x="2" y="3.52"/>
+      <use href="#key-f136" x="18.62" y="4.52"/>
+      <use href="#key-136" x="16.5" y="4.52"/>
+      <use href="#key-086" x="15.5" y="4.52"/>
+      <use href="#key-086" x="14.5" y="4.52"/>
+      <use href="#key-086" x="13.5" y="4.52"/>
+      <use href="#key-086" x="12.5" y="4.52"/>
+      <use href="#key-086" x="11.5" y="4.52"/>
+      <use href="#key-086" x="10.5" y="4.52"/>
+      <use href="#key-086" x="9.5" y="4.52"/>
+      <use href="#key-086" x="8.5" y="4.52"/>
+      <use href="#key-086" x="7.5" y="4.52"/>
+      <use href="#key-086" x="6.5" y="4.52"/>
+      <use href="#key-086" x="5.5" y="4.52"/>
+      <use href="#key-086" x="4.5" y="4.52"/>
+      <use href="#key-086" x="3.49" y="4.52"/>
+      <use href="#key-136" x="2" y="4.52"/>
+      <use href="#key-f136" x="18.62" y="5.52"/>
+      <use href="#key-186" x="15.75" y="5.52"/>
+      <use href="#key-086" x="14.75" y="5.52"/>
+      <use href="#key-086" x="13.75" y="5.52"/>
+      <use href="#key-086" x="12.75" y="5.52"/>
+      <use href="#key-086" x="11.75" y="5.52"/>
+      <use href="#key-086" x="10.75" y="5.52"/>
+      <use href="#key-086" x="9.75" y="5.52"/>
+      <use href="#key-086" x="8.75" y="5.52"/>
+      <use href="#key-086" x="7.75" y="5.52"/>
+      <use href="#key-086" x="6.75" y="5.52"/>
+      <use href="#key-086" x="5.75" y="5.52"/>
+      <use href="#key-086" x="4.75" y="5.52"/>
+      <use href="#key-086" x="3.74" y="5.52"/>
+      <use href="#key-086" x="2.74" y="5.52"/>
+      <use href="#key-086" x="1.75" y="5.52"/>
+      <use href="#key-f136" x="18.62" y="6.52"/>
+      <use href="#key-086" x="16.75" y="6.52"/>
+      <use href="#key-086" x="15.75" y="6.52"/>
+      <use href="#key-136" x="14.25" y="6.52"/>
+      <use href="#key-086" x="13.25" y="6.52"/>
+      <use href="#key-086" x="12.25" y="6.52"/>
+      <use href="#key-086" x="11.25" y="6.52"/>
+      <use href="#key-086" x="10.25" y="6.52"/>
+      <use href="#key-086" x="9.25" y="6.52"/>
+      <use href="#key-086" x="8.25" y="6.52"/>
+      <use href="#key-086" x="7.25" y="6.52"/>
+      <use href="#key-086" x="6.25" y="6.52"/>
+      <use href="#key-086" x="5.25" y="6.52"/>
+      <use href="#key-086" x="4.25" y="6.52"/>
+      <use href="#key-136" x="2.74" y="6.52"/>
+      <use href="#key-086" x="1.75" y="6.52"/>
+      <use href="#key-966" x="4.47" y="7.52"/>
+  </g>
+  <use href="#case" fill="none" stroke="#241C17" stroke-width="3.4" stroke-linejoin="round"/>
+</svg>

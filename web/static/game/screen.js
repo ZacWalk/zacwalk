@@ -8,6 +8,10 @@ export const W = art.PLAY_W;
 export const PH = art.PLAY_H;
 export const H = 180;
 
+/* The widest the title screen's attract mode makes the playfield: three times the arcade's, so
+   on a wide window the game spreads out either side of the portrait. */
+export const WIDEST = 3 * W;
+
 /* The palette as CSS colours, for fillStyle. */
 export const CSS = art.PALETTE.map((c) => (c ? `rgb(${c.join(',')})` : 'transparent'));
 

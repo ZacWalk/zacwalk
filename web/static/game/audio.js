@@ -34,8 +34,9 @@ export class Sound {
     this.node?.port.postMessage(msg);
   }
 
-  /* Starts a tune: 'stage' and 'boss' loop; 'ready', 'clear' and 'over' play once, then hand
-     over to `next` if there is one. */
+  /* Starts a tune: 'stage' (the soundtrack's tune for stage `next.stage` when it follows a
+     jingle) and 'boss' loop; 'ready', 'clear' and 'over' are jingles that play once, then hand
+     over to `next` ({ tune, seed, stage }) if there is one. */
   tune(tune, seed, next = null) {
     this.send({ type: 'tune', tune, seed, next });
   }

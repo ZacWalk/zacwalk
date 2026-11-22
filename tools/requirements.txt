@@ -1,2 +1,0 @@
-# Development only: tools/hero_art.py. The site itself needs only web/requirements.txt.
-Pillow==12.2.0

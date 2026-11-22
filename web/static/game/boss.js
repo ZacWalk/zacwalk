@@ -19,6 +19,9 @@ const PATTERNS = {
 /* Frames the eye stays shut, opening, open and closing. The C64's cursor blinks faster. */
 const EYE = { normal: [100, 8, 160, 8], c64: [40, 0, 70, 0] };
 
+/* How fast the boss bobs up and down, in radians a frame. */
+const BOB = 0.017;
+
 export class Boss {
   constructor(game, artwork) {
     this.game = game;
@@ -28,16 +31,17 @@ export class Boss {
     this.sprites = { body: sprite(body), core: artwork.core.map(sprite), segment: sprite(artwork.segment) };
     this.w = body.w;
     this.h = body.h;
-    this.x = W + 10;
+    this.x = game.width + 10;
     this.baseY = Math.round((PH - body.h) / 2);
     this.sway = Math.max(0, Math.min(16, Math.floor((PH - 24 - body.h) / 2)));
     this.y = this.baseY;
-    this.targetX = W - body.w - 4;
+    this.targetX = game.width - body.w - 4;
     this.hp = game.st.bossHp;
     this.max = this.hp;
     this.t = 0;
     this.phase = 'enter';
     this.eye = 0;
+    this.blink = EYE[this.kind === 'c64' ? 'c64' : 'normal'];
     this.flash = 0;
     this.pattern = 0;
     this.turn = 0;
@@ -67,9 +71,9 @@ export class Boss {
         this.t = 0;
       }
     }
-    if (this.alive) this.y = this.baseY + Math.round(Math.sin(this.t * 0.017) * this.sway);
+    if (this.alive) this.y = this.baseY + Math.round(Math.sin(this.t * BOB) * this.sway);
     if (this.phase === 'fight') {
-      const [shut, opening, open, closing] = EYE[this.kind === 'c64' ? 'c64' : 'normal'];
+      const [shut, opening, open, closing] = this.blink;
       const c = this.t % (shut + opening + open + closing);
       this.eye = c < shut ? 0 : c < shut + opening ? 1 : c < shut + opening + open ? 2 : 1;
       if (c === shut + opening || (game.stageIndex >= 2 && c === shut + opening + (open >> 1))) this.attack();
@@ -178,6 +182,20 @@ export class Boss {
   coreBox() {
     const c = this.sprites.core[0];
     return { x: this.x + this.art.coreAt.x, y: this.y + this.art.coreAt.y, w: c.w, h: c.h };
+  }
+
+  /* Where the eye will be `frames` from now as the boss bobs, and whether it will be open then:
+     where to aim a shot that takes that long to get there. */
+  eyeIn(frames) {
+    const c = this.coreBox();
+    c.open = false;
+    if (this.phase !== 'fight') return c;
+    const t = this.t + Math.round(frames);
+    c.y += Math.round(Math.sin(t * BOB) * this.sway) - (this.y - this.baseY);
+    const [shut, opening, open, closing] = this.blink;
+    const at = t % (shut + opening + open + closing);
+    c.open = at >= shut + opening && at < shut + opening + open;
+    return c;
   }
 
   solid(x, y) {

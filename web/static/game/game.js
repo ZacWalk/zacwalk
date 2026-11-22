@@ -7,7 +7,7 @@
 
 import * as art from './art.js';
 import { stage as makeStage } from './stage.js';
-import { CSS, H, PH, W, blit, canvasOf, circlePoints, disc, ditherCanvas, sprite, text } from './screen.js';
+import { CSS, H, PH, W, WIDEST, blit, canvasOf, circlePoints, disc, ditherCanvas, sprite, text } from './screen.js';
 import { KINDS, MOVES, drawEnemy, spawnWave } from './cast.js';
 import { Boss } from './boss.js';
 import { drawCards, drawHud } from './hud.js';
@@ -28,6 +28,31 @@ const PAUSABLE = new Set(['ready', 'play', 'warning', 'boss', 'clear']);
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+/* The attract mode can be WIDEST pixels across where the arcade is W, so at the end of a stage
+   it shows that much more of the boss arena than the arcade does. The arena is flat, so this
+   carries it on, in the terrain's heights and in its picture, rather than making a longer
+   stage, which would draw the rest of the stage differently. The picture repeats the arena's
+   last W pixels, which are always within its flat stretch. */
+function lengthen(level, terrain, px) {
+  const grow = (heights) => {
+    const longer = new Int16Array(heights.length + px / 2);
+    longer.set(heights);
+    return longer.fill(heights[heights.length - 1], heights.length);
+  };
+  level.floor = grow(level.floor);
+  level.ceil = grow(level.ceil);
+  level.ground = grow(level.ground);
+  level.cols = level.floor.length;
+  const c = document.createElement('canvas');
+  c.width = terrain.width + px;
+  c.height = terrain.height;
+  const g = c.getContext('2d');
+  g.drawImage(terrain, 0, 0);
+  const from = terrain.width - W;
+  for (let x = terrain.width; x < c.width; x += W) g.drawImage(terrain, from, 0, W, terrain.height, x, 0, W, terrain.height);
+  return c;
+}
 
 /* A table to beat on the first game, signed by the chips inside a C64. */
 const DEFAULT_SCORES = [
@@ -66,11 +91,18 @@ const PICKUPS = {
 };
 
 export class Game {
-  constructor(g, input, sound, calm) {
+  /* `demo` is the title screen's attract mode: `input` is then a pilot (pilot.js) rather than
+     a player, and after a game over it starts again rather than asking for initials, so
+     nothing goes on the high score table. Its playfield can also be wider than the arcade's
+     (`width`, up to WIDEST): the stage is the same, and its waves still arrive where they would
+     in the arcade, but there is more of it to either side of the portrait. */
+  constructor(g, input, sound, calm, { demo = false, width = W } = {}) {
     this.g = g;
     this.input = input;
     this.sound = sound;
     this.calm = calm;
+    this.demo = demo;
+    this.width = width;
     this.scores = loadScores();
     this.ship = sprite(art.ship());
     this.podSprites = art.podFrames().map(sprite);
@@ -98,6 +130,8 @@ export class Game {
     this.newEntry = null;
     this.respawnIn = 0;
     this.player = { x: -40, y: PH / 2 - 6, alive: true, speed: 0, weapon: 1, pods: 0, orbit: 0, charge: 0, held: 0, cool: 0, invuln: 0, flyIn: true };
+    // The same game every time; a pilot plays each one a little differently.
+    this.input.newGame?.();
     this.startStage(0);
   }
 
@@ -111,12 +145,15 @@ export class Game {
     const ground = art.terrain(st.level, st.look).widen();
     art.writeScreens(ground, st.level.screens);
     this.terrain = canvasOf(ground);
+    if (this.demo) this.terrain = lengthen(st.level, this.terrain, WIDEST - W);
     this.skyline = canvasOf(art.skyline(st.seed, st.look.skyline).widen());
     this.bossArt = art.boss(st.seed, st.look, st.info.kind);
-    this.stars = Array.from({ length: 90 }, (_, i) => {
-      const layer = i < 50 ? 0 : i < 78 ? 1 : 2;
+    // Ninety stars to the arcade's screen, and as many more as a wider one needs.
+    const count = Math.round((90 * this.width) / W);
+    this.stars = Array.from({ length: count }, (_, i) => {
+      const layer = i < (count * 5) / 9 ? 0 : i < (count * 13) / 15 ? 1 : 2;
       return {
-        x: rand(0, W),
+        x: rand(0, this.width),
         y: rand(0, PH),
         v: [0.1, 0.3, 0.75][layer] * rand(0.8, 1.2),
         c: st.look.stars[layer === 0 ? Math.floor(rand(0, 2)) : layer + 1],
@@ -140,7 +177,7 @@ export class Game {
     this.bonus = 0;
     Object.assign(this.player, { x: -40, y: PH / 2 - 6, alive: true, flyIn: true, invuln: 120, charge: 0, held: 0 });
     this.enter('ready');
-    this.sound.tune('ready', st.seed, { tune: 'stage', seed: st.seed });
+    this.sound.tune('ready', st.seed, { tune: 'stage', seed: st.seed, stage: index });
   }
 
   enter(state) {
@@ -150,7 +187,7 @@ export class Game {
 
   update() {
     const input = this.input;
-    input.poll();
+    input.poll(this);
     if (input.took('mute') && this.state !== 'initials') this.onMute?.(this.sound.toggleMute());
     if (PAUSABLE.has(this.state) && (input.took('pause') || (this.paused && input.tapped))) this.setPaused(!this.paused);
     if (!this.paused) {
@@ -197,7 +234,9 @@ export class Game {
         if (t >= (this.stageIndex % 5 === 4 ? 420 : 330)) this.startStage(this.stageIndex + 1);
         break;
       case 'over':
-        if (t >= 300 || (t > 60 && this.input.confirmed())) this.afterGameOver();
+        if (this.demo) {
+          if (t >= 120) this.newGame();
+        } else if (t >= 300 || (t > 60 && this.input.confirmed())) this.afterGameOver();
         break;
       case 'initials':
         this.updateInitials();
@@ -280,11 +319,19 @@ export class Game {
     const moving = (this.state === 'ready' || this.state === 'play') && this.scrollX < st.length;
     this.scrollSpeed = moving ? SCROLL : 0;
     this.scrollX = Math.min(st.length, this.scrollX + this.scrollSpeed);
-    while (this.waveAt < st.waves.length && st.waves[this.waveAt].at <= this.scrollX) spawnWave(this, st.waves[this.waveAt++]);
+    // A wave comes in at the right edge of the arcade's screen as it reaches the wave's place in
+    // the stage. A wider screen's right edge gets there sooner, so its waves come in sooner, at
+    // the same place; and at the start of a stage it already reaches past its first few waves,
+    // so those start out at their places rather than all at once at the edge.
+    const ahead = this.scrollX + this.width - W;
+    while (this.waveAt < st.waves.length && st.waves[this.waveAt].at <= ahead) {
+      const w = st.waves[this.waveAt++];
+      spawnWave(this, w, w.at + W - this.scrollX);
+    }
     for (const s of this.stars) {
       s.x -= s.v * (moving ? 2 : 1);
       if (s.x < 0) {
-        s.x += W;
+        s.x += this.width;
         s.y = rand(0, PH);
       }
     }
@@ -323,7 +370,7 @@ export class Game {
     } else {
       const speed = 1.25 + 0.35 * p.speed;
       const m = input.move();
-      p.x = clamp(p.x + m.x * speed + input.drag.x, 0, W - 32);
+      p.x = clamp(p.x + m.x * speed + input.drag.x, 0, this.width - 32);
       p.y = clamp(p.y + m.y * speed + input.drag.y, 1, PH - 13);
     }
     if (p.invuln > 0) p.invuln--;
@@ -425,7 +472,7 @@ export class Game {
     for (const s of this.shots) {
       s.x += s.vx;
       s.y += s.vy;
-      if (s.x > W + 8 || s.y < -8 || s.y > PH + 8) s.dead = true;
+      if (s.x > this.width + 8 || s.y < -8 || s.y > PH + 8) s.dead = true;
       else if (this.solid(s.x, s.y)) {
         s.dead = true;
         this.spark(s.x, s.y, GREY, 2);
@@ -437,7 +484,7 @@ export class Game {
       b.len = Math.min(52, b.len + 7);
       b.t++;
     }
-    this.beams = this.beams.filter((b) => b.x - b.len < W + 4);
+    this.beams = this.beams.filter((b) => b.x - b.len < this.width + 4);
     if (this.muzzle > 0) this.muzzle--;
   }
 
@@ -456,7 +503,7 @@ export class Game {
       if (e.ground) e.x -= this.scrollSpeed;
       MOVES[e.move](this, e);
       if (e.dying > 0 && --e.dying === 0) this.killEnemy(e);
-      const off = e.vx > 0 ? e.x > W + 60 : e.x < -70;
+      const off = e.vx > 0 ? e.x > this.width + 60 : e.x < -70;
       if (off || e.y < -50 || e.y > PH + 50) e.gone = true;
     }
     this.enemies = this.enemies.filter((e) => !e.dead && !e.gone);
@@ -467,7 +514,7 @@ export class Game {
   /* An enemy shot at the ship, if it is on screen and not point blank. */
   aim(e, speed = 1, offset = 0) {
     const p = this.player;
-    if (!p.alive || e.x > W - 6 || e.x < 10) return;
+    if (!p.alive || e.x > this.width - 6 || e.x < 10) return;
     const dx = p.x + 16 - e.x;
     const dy = p.y + 7 - e.y;
     if (dx * dx + dy * dy < 1600) return;
@@ -515,7 +562,7 @@ export class Game {
     for (const b of this.bullets) {
       b.x += b.vx;
       b.y += b.vy;
-      if (b.x < -8 || b.x > W + 8 || b.y < -8 || b.y > PH + 8 || this.solid(b.x, b.y)) b.dead = true;
+      if (b.x < -8 || b.x > this.width + 8 || b.y < -8 || b.y > PH + 8 || this.solid(b.x, b.y)) b.dead = true;
       else if (pods.some((q) => Math.abs(q.x - b.x) < 6 && Math.abs(q.y - b.y) < 6)) {
         b.dead = true;
         this.spark(b.x, b.y, LBLUE, 3);
@@ -742,19 +789,42 @@ export class Game {
     g.clip();
     if (this.shake > 0 && !this.calm) g.translate(Math.round(rand(-2, 2)), Math.round(rand(-2, 2)));
     this.drawBackdrop(g);
-    for (const k of this.pickups) {
-      const c = this.capsules[k.type];
-      if (k.t % 24 < 20) g.drawImage(c.img, Math.round(k.x - c.w / 2), Math.round(k.y - c.h / 2));
-    }
+    this.drawPickups(g);
     this.boss?.draw(g);
     for (const e of this.enemies) drawEnemy(g, e);
     this.drawShots(g);
     this.drawPlayer(g);
+    this.drawGuns(g);
     this.drawBullets(g);
     this.drawEffects(g);
+    this.drawPopups(g);
     g.restore();
     drawHud(g, this);
     drawCards(g, this);
+  }
+
+  /* The attract mode draws the playfield in two layers, with no HUD or cards: the world, which
+     the title screen shows in grey, and over it the shots, bullets and explosions in colour. */
+  renderLayers(world, action) {
+    world.fillStyle = CSS[this.st.look.sky];
+    world.fillRect(0, 0, this.width, PH);
+    this.drawBackdrop(world);
+    this.drawPickups(world);
+    this.boss?.draw(world);
+    for (const e of this.enemies) drawEnemy(world, e);
+    this.drawPlayer(world);
+    action.clearRect(0, 0, this.width, PH);
+    this.drawShots(action);
+    this.drawGuns(action);
+    this.drawBullets(action);
+    this.drawEffects(action);
+  }
+
+  drawPickups(g) {
+    for (const k of this.pickups) {
+      const c = this.capsules[k.type];
+      if (k.t % 24 < 20) g.drawImage(c.img, Math.round(k.x - c.w / 2), Math.round(k.y - c.h / 2));
+    }
   }
 
   drawBackdrop(g) {
@@ -765,13 +835,14 @@ export class Game {
     }
     const sky = this.skyline;
     const off = Math.floor(this.scrollX * 0.3) % sky.width;
-    for (let x = -off; x < W; x += sky.width) g.drawImage(sky, x, PH - sky.height - 6);
-    g.drawImage(this.terrain, Math.floor(this.scrollX), 0, W, PH, 0, 0, W, PH);
+    const w = this.width;
+    for (let x = -off; x < w; x += sky.width) g.drawImage(sky, x, PH - sky.height - 6);
+    g.drawImage(this.terrain, Math.floor(this.scrollX), 0, w, PH, 0, 0, w, PH);
     // The old computers' cursors, blinking on their screens.
     const left = Math.floor(this.scrollX);
     for (const s of this.st.level.screens) {
       const c = art.SCREEN_CURSORS[s.kind];
-      if (!c || s.x + s.w < left || s.x > left + W || Math.floor(this.t / c.blink) % 2) continue;
+      if (!c || s.x + s.w < left || s.x > left + w || Math.floor(this.t / c.blink) % 2) continue;
       g.fillStyle = CSS[c.colour];
       g.fillRect(s.x - left + c.x, s.y + c.y, c.w, c.h);
     }
@@ -806,9 +877,15 @@ export class Game {
     }
   }
 
+  /* Whether the ship is on screen this frame: it blinks while a respawn shields it. */
+  get shipShown() {
+    const p = this.player;
+    return p.alive && !(p.invuln > 0 && !p.flyIn && (p.invuln >> 2) % 2);
+  }
+
   drawPlayer(g) {
     const p = this.player;
-    if (!p.alive || (p.invuln > 0 && !p.flyIn && (p.invuln >> 2) % 2)) return;
+    if (!this.shipShown) return;
     const x = Math.round(p.x);
     const y = Math.round(p.y);
     const len = 3 + ((this.t >> 1) % 3) + (this.input.move().x > 0.3 ? 3 : 0);
@@ -821,6 +898,14 @@ export class Game {
     const pod = this.podSprites[(this.t >> 3) % 2];
     for (const q of this.podSpots()) g.drawImage(pod.img, Math.round(q.x - pod.w / 2), Math.round(q.y - pod.h / 2));
     g.drawImage(this.ship.img, x, y);
+  }
+
+  /* The flash at the guns, and the beam charging at the nose. */
+  drawGuns(g) {
+    const p = this.player;
+    if (!this.shipShown) return;
+    const x = Math.round(p.x);
+    const y = Math.round(p.y);
     if (this.muzzle > 0) {
       g.fillStyle = CSS[WHITE];
       g.fillRect(x + 31, y + 6, 2, 3);
@@ -874,6 +959,9 @@ export class Game {
       const size = q.size ?? 1;
       g.fillRect(Math.round(q.x), Math.round(q.y), size, size);
     }
+  }
+
+  drawPopups(g) {
     for (const u of this.popups) {
       if (u.t < 30 || u.t % 4 < 2) text(g, u.str, u.x, u.y - 3, u.t % 8 < 4 ? WHITE : YELLOW, { align: 'center' });
     }

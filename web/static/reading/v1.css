@@ -1,0 +1,32 @@
+/* Opt-in layout only. The host owns type, content margins, accents and controls. */
+:where(:root) {
+  --reading-min: 26rem;
+  --reading-gap: clamp(0.875rem, 1.6vw, 1.25rem);
+  --reading-padding: clamp(1rem, 2vw, 1.5rem);
+  --reading-radius: 0.5rem;
+  --reading-surface: #222526;
+  --reading-border: #525657;
+}
+
+:where([data-reading="grid"], [data-reading="stack"]):not([hidden]) {
+  display: grid;
+  gap: var(--reading-gap);
+}
+:where([data-reading="grid"]) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--reading-min)), 1fr));
+}
+:where([data-reading="stack"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+:where([data-reading="head"]) {
+  margin-block-end: var(--reading-gap);
+  padding-block-end: 0.85rem;
+  border-bottom: 1px solid var(--identity-divider, var(--reading-border));
+}
+:where([data-reading="panel"]) {
+  min-width: 0;
+  padding: var(--reading-padding);
+  border: 1px solid var(--reading-border);
+  border-radius: var(--reading-radius);
+  background: var(--reading-surface);
+}

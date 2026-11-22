@@ -1,0 +1,66 @@
+[data-site-menu] {
+    margin-inline-start: auto;
+    min-inline-size: 0;
+}
+[data-site-menu] > summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid currentColor;
+    border-color: color-mix(in srgb, currentColor 50%, transparent);
+    border-radius: 4px;
+    font: 600 0.9375rem/1.2 system-ui, sans-serif;
+    list-style: none;
+    cursor: pointer;
+}
+[data-site-menu] > summary::-webkit-details-marker,
+[data-site-menu]:not([open]) > summary path:last-child,
+[data-site-menu][open] > summary path:first-child {
+    display: none;
+}
+[data-site-menu] > summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+@media (width > 900px) {
+    /* If JS is off and a closed menu is resized, keep its opener reachable. */
+    [data-site-menu][open] > summary { display: none; }
+}
+@media (max-width: 900px) {
+    [data-site-menu] {
+        position: relative;
+        z-index: 20;
+    }
+    [data-site-menu] > :is(nav, ul) {
+        position: absolute;
+        top: calc(100% + 0.3rem);
+        inset-inline-end: 0;
+        display: grid;
+        gap: 0;
+        justify-content: stretch;
+        width: min(15rem, calc(100vw - 2rem));
+        max-height: 65vh;
+        max-height: 65dvh;
+        overflow: auto;
+        overscroll-behavior: contain;
+        margin: 0;
+        padding: 0.35rem;
+        border: 1px solid currentColor;
+        border-color: color-mix(in srgb, currentColor 35%, transparent);
+        border-radius: 5px;
+        box-shadow: 0 8px 20px rgb(0 0 0 / 25%);
+    }
+    [data-site-menu] :is(nav, ul) a {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+        line-height: 1.3;
+        white-space: normal;
+    }
+}

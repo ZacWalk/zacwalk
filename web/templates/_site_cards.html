@@ -1,0 +1,31 @@
+{% set cards = [
+  ('diffractor', 'Diffractor', 'https://www.diffractor.com/', 'diffractor.com', 'diffractor.webp', 400, 400,
+   'The fastest photo and video organiser on Windows. Free, local-only, no subscription.'),
+  ('64ready', '64Ready', 'https://64ready.com/', '64ready.com', '64ready-logo.svg', 392, 499,
+   'A Commodore 64 emulator in the browser, with labs for BASIC and 6502 assembly and an interactive guide to how the machine works.'),
+  ('alphagalactica', 'Alpha Galactica', 'https://alphagalactica.com/', 'alphagalactica.com', 'alpha-galactica-logo.svg', 512, 512,
+   'Independent research into technology stocks and the long-running investment themes behind them.'),
+  ('oldthinkpad', 'OldThinkPad', 'https://oldthinkpad.com/', 'oldthinkpad.com', 'oldthinkpad-701c.webp', 320, 320,
+   'A field guide to vintage IBM ThinkPads, from the 700C to the 770, with a searchable library of original manuals and brochures.')
+] %}
+{% set zacwalk_card = ('zacwalk', 'ZacWalk', 'https://zacwalk.com/', 'zacwalk.com', 'zacwalk-portrait.svg', 96, 96,
+                       'My personal site, software projects, and professional work.') %}
+{% set art_dir = card_art_dir | default('site-cards') %}
+<ul class="site-grid" role="list">
+  {% for entry in cards %}
+    {% set theme, name, href, domain, image, width, height, description = zacwalk_card if entry[0] == site_to_replace else entry %}
+    <li class="site-card" data-site="{{ theme }}">
+      <a class="site-card-link" href="{{ href }}" aria-labelledby="site-card-{{ theme }}-title">
+        <div class="site-card-image">
+          <img src="{{ url_for('static', filename=art_dir ~ '/' ~ image, v={'zacwalk': 'face-3', '64ready': 'case-2'}.get(theme)) }}" alt="{{ name }} artwork"
+               width="{{ width }}" height="{{ height }}" loading="lazy" decoding="async">
+        </div>
+        <div class="site-card-body">
+          <h3 class="site-card-title" id="site-card-{{ theme }}-title">{{ name }}</h3>
+          <p class="site-card-desc">{{ description }}</p>
+          <span class="site-card-cta">{{ domain }}</span>
+        </div>
+      </a>
+    </li>
+  {% endfor %}
+</ul>

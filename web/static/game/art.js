@@ -305,8 +305,7 @@ const MICRO = {
 
 // ---------- the ship ----------
 
-/* The player's fighter, nose to the right. tools/hero_art.py draws the same ship on the
-   title screen from the same rows, so change both together. */
+/* The player's fighter, nose to the right. */
 export const SHIP_ART = [
   '....kkk.........................',
   '...kllwk........................',

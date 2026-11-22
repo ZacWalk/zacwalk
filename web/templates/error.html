@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en-GB" data-site="zacwalk">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ code }} — {{ title }} | Rethinkify</title>
+  <title>{{ code }} — {{ title }} | ZacWalk</title>
   <meta name="robots" content="noindex, follow" />
-  <meta name="theme-color" content="#0a0a0d" />
+  <meta name="theme-color" content="#111416" />
   <meta name="color-scheme" content="dark" />
-  <link rel="icon" href="/static/favicon-c64.svg" type="image/svg+xml" />
+  <link rel="icon" href="{{ url_for('static', filename='zacwalk-portrait.svg', v='face-3') }}" type="image/svg+xml" sizes="any" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Share+Tech+Mono&family=Sixtyfour:BLED,SCAN@0..100,-53..100&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/styles.css?v={{ asset_version }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='site-cards/identity-v1.css') }}" />
 </head>
 
 <body>

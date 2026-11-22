@@ -1,0 +1,141 @@
+/* The section title belongs to the host; titles inside the list belong to each destination. */
+#sites-heading, #my-sites-heading {
+  color: var(--identity-ink);
+}
+
+ul.site-grid {
+  --site-card-ink: #edf0ef;
+  --site-card-copy: #d7dcdc;
+  --site-card-focus: #ffc465;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: clamp(1.5rem, 2.5vw, 2rem) 0 0;
+  padding: 0;
+}
+
+.site-grid .site-card {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--identity-divider);
+  border-top: 2px solid var(--identity-mark);
+  background-color: var(--identity-tint);
+  border-radius: 10px;
+  corner-shape: bevel;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-grid .site-card {
+    transition:
+      transform 160ms steps(2, end),
+      border-color 160ms steps(2, end);
+  }
+
+  .site-grid .site-card:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.site-grid .site-card:hover {
+  border-color: var(--identity-mark);
+}
+
+.site-grid .site-card-link {
+  display: grid;
+  grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1rem;
+  height: 100%;
+  color: var(--site-card-ink);
+  font-family: var(--font-body, "Segoe UI", system-ui, sans-serif);
+  text-decoration: none;
+}
+
+.site-grid .site-card-link:focus-visible {
+  outline: 2px solid var(--site-card-focus);
+  outline-offset: -4px;
+}
+
+/* Draw the focus ring outside the clipping card where supported. */
+.site-grid .site-card:has(.site-card-link:focus-visible) {
+  outline: 2px solid var(--site-card-focus);
+  outline-offset: 3px;
+}
+
+@supports selector(:has(*)) {
+  .site-grid .site-card-link:focus-visible {
+    outline: none;
+  }
+}
+
+.site-card-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0 0.75rem 0.75rem;
+}
+
+.site-card-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.site-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 1rem 1.25rem 1rem 0;
+  overflow-wrap: anywhere;
+}
+
+.site-grid .site-card-title {
+  margin: 0;
+  color: var(--identity-ink);
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.site-grid .site-card-desc {
+  margin: 0;
+  color: var(--site-card-copy);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.site-card-cta {
+  margin-top: 0.25rem;
+  color: var(--site-card-copy);
+  font-family: var(--font-hud, ui-monospace, Consolas, monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.site-card-link:hover .site-card-cta {
+  color: var(--site-card-ink);
+}
+
+@media (max-width: 720px) {
+  ul.site-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-grid .site-card-link {
+    grid-template-columns: minmax(0, 6rem) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 380px) {
+  .site-grid .site-card-link {
+    grid-template-columns: minmax(0, 4rem) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+}

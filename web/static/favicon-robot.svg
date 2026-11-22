@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 11 11" shape-rendering="crispEdges" role="img" aria-label="ZacWalk robot head">
+  <title>ZacWalk robot head</title>
+  <rect width="11" height="11" fill="#0a0a0d"/>
+  <path fill="#000000" d="M4 1h3v1h-3zM3 2h1v1h-1zM7 2h1v1h-1zM2 3h1v1h-1zM8 3h1v1h-1zM2 4h1v1h-1zM8 4h1v1h-1zM1 5h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM1 7h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM1 8h1v1h-1zM7 8h1v1h-1zM2 9h5v1h-5z"/>
+  <path fill="#ffffff" d="M4 2h1v1h-1zM3 3h2v1h-2zM3 4h1v1h-1zM2 5h1v1h-1zM2 6h1v1h-1zM2 7h2v1h-2zM5 7h1v1h-1z"/>
+  <path fill="#a8a8a8" d="M5 2h2v1h-2zM5 3h2v1h-2zM4 4h2v1h-2zM3 6h1v1h-1zM6 7h1v1h-1zM2 8h1v1h-1z"/>
+  <path fill="#6c6c6c" d="M7 3h1v1h-1zM6 4h1v1h-1zM6 5h1v1h-1zM5 6h1v1h-1zM3 8h2v1h-2z"/>
+  <path fill="#444444" d="M7 4h1v1h-1zM7 5h1v1h-1zM6 6h2v1h-2zM5 8h2v1h-2z"/>
+  <path fill="#e04040" d="M3 5h1v1h-1zM5 5h1v1h-1z"/>
+</svg>

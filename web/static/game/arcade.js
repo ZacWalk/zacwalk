@@ -14,7 +14,7 @@ let running = false;
 function cabinet() {
   const dialog = document.createElement('dialog');
   dialog.className = 'arcade';
-  dialog.setAttribute('aria-label', 'Rethinkify, the game');
+  dialog.setAttribute('aria-label', 'ZacWalk, the game');
   dialog.setAttribute('aria-describedby', 'arcade-help');
   const canvas = document.createElement('canvas');
   canvas.className = 'arcade-screen';
@@ -45,8 +45,9 @@ function cabinet() {
 }
 
 /* Takes over the window with the game. `audio` is an AudioContext made in the click that
-   started it; `opener` gets the focus back afterwards. */
-export async function play({ audio = null, opener = null } = {}) {
+   started it; `opener` gets the focus back afterwards, and `onClose` is called once the player
+   has quit. */
+export async function play({ audio = null, opener = null, onClose = null } = {}) {
   if (running) {
     audio?.close().catch(() => {});
     return;
@@ -106,6 +107,7 @@ export async function play({ audio = null, opener = null } = {}) {
     document.documentElement.classList.remove('arcade-open');
     running = false;
     opener?.focus();
+    onClose?.();
   };
 
   dialog.addEventListener('close', close);
